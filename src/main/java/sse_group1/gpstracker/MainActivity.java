@@ -33,6 +33,8 @@ public class MainActivity extends Activity implements LocationListener {
     private TextView latitudeField;
     private TextView longitudeField;
     private TextView altitudeField;
+    private TextView versionField;
+
     private LocationManager locationManager;
     private String provider;
 
@@ -58,6 +60,8 @@ public class MainActivity extends Activity implements LocationListener {
         longitudeField = (TextView) findViewById(R.id.TextView04);
         altitudeField = (TextView) findViewById(R.id.TextView06);
 
+        versionField = (TextView) findViewById(R.id.TextView10);
+        versionField.setText("Version 1.1\n");
         // Get the location manager
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         // Define the criteria how to select the locatioin provider -> use
@@ -74,9 +78,12 @@ public class MainActivity extends Activity implements LocationListener {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,0,0,this);
         Location location = locationManager.getLastKnownLocation(provider);
 
         // Initialize the location fields
+
         if (location != null) {
             System.out.println("Provider " + provider + " has been selected.");
             onLocationChanged(location);
@@ -104,6 +111,7 @@ public class MainActivity extends Activity implements LocationListener {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
+        Toast.makeText(this, "OnResume",Toast.LENGTH_SHORT).show();
         locationManager.requestLocationUpdates(provider, 400, 1, this);
     }
 
@@ -126,23 +134,26 @@ public class MainActivity extends Activity implements LocationListener {
 
     @Override
     public void onLocationChanged(Location location) {
-        int lat = (int) (location.getLatitude());
-        int lng = (int) (location.getLongitude());
-        int alt = (int) (location.getAltitude());
+        float lat = (float) (location.getLatitude());
+        float lng = (float) (location.getLongitude());
+        float alt = (float) (location.getAltitude());
         String date;
         String deviceId;
+
+        Toast.makeText(this, "LocationChanged",Toast.LENGTH_SHORT).show();
+
         latitudeField.setText(String.valueOf(lat));
         longitudeField.setText(String.valueOf(lng));
         altitudeField.setText(String.valueOf(alt));
 
 
-        SimpleDateFormat SimpleDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX");
+        SimpleDateFormat SimpleDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 
         date = SimpleDate.format(new Date());
         deviceId = "48086";
 
-/*
-        OkHttpClient client = new OkHttpClient();
+
+    /*    OkHttpClient client = new OkHttpClient();
 
         MediaType mediaType = MediaType.parse("application/vnd.com.nsn.cumulocity.event+json;charset=UTF-8");
         RequestBody body = RequestBody.create(mediaType, "{\n\t\"c8y_Position\": {\n    \t\"alt\": " + alt + ",\n      \t\"lng\": " + lng + ",\n      \t\"lat\": " + lat + " },\n\t\"time\":\"" + date + "\",\n    \"source\": {\n    \t\"id\":\"" + deviceId + "\" }, \n    \"type\": \"c8y_LocationUpdate\",\n  \"text\": \"LocUpdate\"\n}");
@@ -163,8 +174,10 @@ public class MainActivity extends Activity implements LocationListener {
 
         if (response.code() == 201) {
             System.out.println("Send LocationUpdate: - alt: " + alt + " long: " + lng + " lat: " + lat);
+            Toast.makeText(this, "SendLocationUpdate",Toast.LENGTH_SHORT).show();
         } else {
             System.out.println("Error: Could not send LocationUpdate, Error Code: " + response.code());
+            Toast.makeText(this, "Could not send LocationUpdate",Toast.LENGTH_SHORT).show();
         }
 
 */
