@@ -9,6 +9,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -20,6 +21,7 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.IOException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -33,6 +35,7 @@ public class MainActivity extends Activity implements LocationListener {
     private TextView latitudeField;
     private TextView longitudeField;
     private TextView altitudeField;
+    private TextView lastUpdateField;
     private TextView versionField;
 
     private LocationManager locationManager;
@@ -59,9 +62,9 @@ public class MainActivity extends Activity implements LocationListener {
         latitudeField = (TextView) findViewById(R.id.TextView02);
         longitudeField = (TextView) findViewById(R.id.TextView04);
         altitudeField = (TextView) findViewById(R.id.TextView06);
-
+        lastUpdateField = (TextView) findViewById(R.id.TextView2);
         versionField = (TextView) findViewById(R.id.TextView10);
-        versionField.setText("Version 1.1\n");
+        versionField.setText("Version 1.2\n");
         // Get the location manager
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         // Define the criteria how to select the locatioin provider -> use
@@ -137,23 +140,20 @@ public class MainActivity extends Activity implements LocationListener {
         float lat = (float) (location.getLatitude());
         float lng = (float) (location.getLongitude());
         float alt = (float) (location.getAltitude());
+
+        String deviceId = "48086";
         String date;
-        String deviceId;
+        SimpleDateFormat SimpleDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        date = SimpleDate.format(new Date());
 
         Toast.makeText(this, "LocationChanged",Toast.LENGTH_SHORT).show();
 
         latitudeField.setText(String.valueOf(lat));
         longitudeField.setText(String.valueOf(lng));
         altitudeField.setText(String.valueOf(alt));
+        lastUpdateField.setText(String.valueOf(date));
 
 
-        SimpleDateFormat SimpleDate = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-
-        date = SimpleDate.format(new Date());
-        deviceId = "48086";
-
-
-    /*    OkHttpClient client = new OkHttpClient();
 
         MediaType mediaType = MediaType.parse("application/vnd.com.nsn.cumulocity.event+json;charset=UTF-8");
         RequestBody body = RequestBody.create(mediaType, "{\n\t\"c8y_Position\": {\n    \t\"alt\": " + alt + ",\n      \t\"lng\": " + lng + ",\n      \t\"lat\": " + lat + " },\n\t\"time\":\"" + date + "\",\n    \"source\": {\n    \t\"id\":\"" + deviceId + "\" }, \n    \"type\": \"c8y_LocationUpdate\",\n  \"text\": \"LocUpdate\"\n}");
@@ -165,13 +165,9 @@ public class MainActivity extends Activity implements LocationListener {
                 .addHeader("accept", "application/vnd.com.nsn.cumulocity.event+json")
                 .build();
 
-        Response response = null;
-        try {
-            response = client.newCall(request).execute();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        //Response response = new UploadData().execute(request);
+        new UploadData().execute(request);
+/*
         if (response.code() == 201) {
             System.out.println("Send LocationUpdate: - alt: " + alt + " long: " + lng + " lat: " + lat);
             Toast.makeText(this, "SendLocationUpdate",Toast.LENGTH_SHORT).show();
@@ -246,4 +242,40 @@ public class MainActivity extends Activity implements LocationListener {
         AppIndex.AppIndexApi.end(client2, viewAction);
         client2.disconnect();
     }
+
+    interface AsyncTaskCompleteListener<T> {
+        public void onTaskComplete(T result);
+    }
+
+    private class UploadData extends AsyncTask<Request, Integer, Response> {
+        protected Response doInBackground(Request... request) {
+
+            OkHttpClient client = new OkHttpClient();
+            Response response = null;
+            try {
+                response = client.newCall(request[0]).execute();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return response;
+
+        }
+
+        protected void onPostExecute(Response result) {
+            if (result != null ) {
+                if (result.code() == 201) {
+                    Toast.makeText(getApplicationContext(), "Location Update Send", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "Location Update Failed", Toast.LENGTH_SHORT).show();
+                }
+
+            } else {
+                Toast.makeText(getApplicationContext(), "Location Update Failed", Toast.LENGTH_SHORT).show();
+            }
+            //super.onPostExecute(result);
+          //  Toast.makeText(getApplicationContext(), result.code(), Toast.LENGTH_SHORT).show();
+            //return result;
+        }
+    }
+
 }
